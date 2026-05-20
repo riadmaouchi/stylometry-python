@@ -101,8 +101,9 @@ Workflow file: `.github/workflows/ci.yml`
 
 ### Publishing
 
-Package publication is automated on semantic tags (`v*`) via GitHub Actions.
+Package publication is automated after a successful `Release` workflow run.
 Tags are generated from Conventional Commits by semantic-release.
+Semantic release runs only after CI passes on the target branch.
 
 Release workflow: `.github/workflows/release.yml`
 Workflow file: `.github/workflows/publish.yml`

@@ -66,7 +66,9 @@ class TestAnalyzerFunctionalWorkflows:
         assert fig.axes
         plt.close(fig)
 
-    @pytest.mark.filterwarnings("ignore:invalid value encountered in divide:RuntimeWarning")
+    @pytest.mark.filterwarnings(
+        "ignore:invalid value encountered in divide:RuntimeWarning"
+    )
     def test_plot_clusters_returns_figure(self):
         analyzer = StyleAnalyzer(language="en", min_words=5)
 
