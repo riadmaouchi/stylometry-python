@@ -284,13 +284,28 @@ See the `examples/` directory:
 - `examples/rowling.py` — Reproduce the Rowling identification experiment
 - `examples/llm_shift.py` — Measure GPT-4 stylistic shift on your own texts
 - `examples/code_attribution.py` — Attribute code files to developers
+- `examples/visualizations.py` — Generate fingerprint and cluster plots as PNG files
 
 ```bash
 cd examples
 python rowling.py
 # → Most likely author: Rowling (distance: 0.18)
 # → Second closest:     Rendell (distance: 0.31)
+
+python visualizations.py
+# → saves examples/results/fingerprints.png
+# → saves examples/results/clusters.png
 ```
+
+### Visualization Preview
+
+Fingerprint comparison:
+
+![Function-Word Fingerprints](examples/results/fingerprints.png)
+
+PCA clusters:
+
+![Stylometric Clusters](examples/results/clusters.png)
 
 ---
 
