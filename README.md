@@ -12,6 +12,8 @@ pip install stylometry-python
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/riadmaouchi/stylometry-python/actions/workflows/ci.yml/badge.svg)](https://github.com/riadmaouchi/stylometry-python/actions/workflows/ci.yml)
+[![Publish](https://github.com/riadmaouchi/stylometry-python/actions/workflows/publish.yml/badge.svg)](https://github.com/riadmaouchi/stylometry-python/actions/workflows/publish.yml)
+[![PyPI version](https://img.shields.io/pypi/v/stylometry-python.svg)](https://pypi.org/project/stylometry-python/)
 [![codecov](https://codecov.io/github/riadmaouchi/stylometry-python/graph/badge.svg?token=GP1274n1wW)](https://codecov.io/github/riadmaouchi/stylometry-python)
 
 ---
