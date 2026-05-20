@@ -44,6 +44,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/p/stylometry-python
 
     steps:
       - name: Download dist artifacts
