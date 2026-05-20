@@ -1,8 +1,12 @@
 name: Publish
 
 on:
-  release:
-    types: [published]
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref (tag/sha) to build and publish
+        required: false
+        type: string
   workflow_dispatch:
 
 concurrency:
@@ -11,7 +15,6 @@ concurrency:
 
 jobs:
   build:
-    if: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -23,7 +26,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+          ref: ${{ github.event_name == 'workflow_call' && inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
