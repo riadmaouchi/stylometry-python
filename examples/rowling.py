@@ -44,7 +44,7 @@ def main() -> None:
     predicted, distances = analyzer.predict(unknown_text)
 
     ranking = sorted(distances.items(), key=lambda item: item[1])
-    best_label, best_distance = ranking[0]
+    _, best_distance = ranking[0]
     second_label, second_distance = ranking[1]
 
     print(f"Most likely author: {predicted} (distance: {best_distance:.2f})")
