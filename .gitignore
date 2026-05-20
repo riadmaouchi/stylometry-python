@@ -1,0 +1,31 @@
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
+venv/
+
+# Packaging artifacts
+*.egg-info/
+dist/
+build/
+
+# Test and tooling caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Notebook artifacts
+.ipynb_checkpoints/
+
+# Local environment files
+.env
+
+# OS files
+.DS_Store
+
+# Generated images (keep curated results)
+*.png
+!results/*.png
