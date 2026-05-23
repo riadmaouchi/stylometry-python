@@ -42,32 +42,45 @@ _EXT_TO_LANG: dict[str, str] = {
 # Language-specific patterns
 # ---------------------------------------------------------------------------
 
+# Shared comment-prefix strings (avoids duplicating literals)
+_P_HASH       = r"^\s*#"
+_P_SLASHSLASH = r"^\s*//"
+_P_SLASHSTAR  = r"^\s*/\*"
+_P_STAR       = r"^\s*\*"
+_P_DOC_SLASH  = r"^\s*///"
+
 _COMMENT_PREFIXES: dict[str, list[str]] = {
-    "python":     [r"^\s*#"],
-    "javascript": [r"^\s*//", r"^\s*/\*", r"^\s*\*"],
-    "typescript": [r"^\s*//", r"^\s*/\*", r"^\s*\*"],
-    "c":          [r"^\s*//", r"^\s*/\*", r"^\s*\*"],
-    "ruby":       [r"^\s*#"],
-    "go":         [r"^\s*//"],
-    "rust":       [r"^\s*///", r"^\s*//"],
+    "python":     [_P_HASH],
+    "javascript": [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
+    "typescript": [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
+    "c":          [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
+    "ruby":       [_P_HASH],
+    "go":         [_P_SLASHSLASH],
+    "rust":       [_P_DOC_SLASH, _P_SLASHSLASH],
 }
 
-_DOCSTRING_RE: dict[str, re.Pattern[str]] = {
-    # Python uses a line-by-line approach (_count_py_documented_fns) — no pattern here
-    "python":     re.compile(r'(?!)'),  # never matches; handled separately
-    "javascript": re.compile(r'/\*\*.*?\*/\s*\n?\s*(?:(?:async\s+)?function\s+\w+|\w+\s*[=:]\s*(?:async\s*)?\()', re.DOTALL),
-    "typescript": re.compile(r'/\*\*.*?\*/\s*\n?\s*(?:(?:async\s+)?function\s+\w+|\w+\s*[=:]\s*(?:async\s*)?\()', re.DOTALL),
-    "go":         re.compile(r'//\s*\w+[^\n]*\n\s*func\s+'),
-    "rust":       re.compile(r'///[^\n]*\n\s*(?:pub\s+)?(?:async\s+)?fn\s+'),
-    "c":          re.compile(r'/\*\*.*?\*/\s*\n?\s*\w+\s+\w+\s*\(', re.DOTALL),
-    "ruby":       re.compile(r'#\s*[A-Z][^\n]+\n\s*def\s+\w+'),
+# JSDoc block — shared by JS and TS (count blocks, not anchored to function type)
+_JSDOC_RE = re.compile(r'/\*\*.*?\*/', re.DOTALL)
+
+_DOCSTRING_RE: dict[str, re.Pattern[str] | None] = {
+    "python": None,          # handled by _count_py_documented_fns
+    "javascript": _JSDOC_RE,
+    "typescript": _JSDOC_RE,
+    "go":   re.compile(r'//\s*\w[^\n]*\n\s*func\s+'),
+    "rust": re.compile(r'///[^\n]*\n\s*(?:pub\s+)?(?:async\s+)?fn\s+'),
+    "c":    re.compile(r'/\*\*.*?\*/\s*\n\s*\w+\s+\w+\s*\(', re.DOTALL),
+    "ruby": re.compile(r'#\s*[A-Z][^\n]+\n\s*def\s+\w+'),
 }
 
-_FUNCTION_RE: dict[str, re.Pattern[str]] = {
+_JS_FUNC_RE  = re.compile(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\()', re.MULTILINE)
+_TS_ACCESS   = r'(?:public|private|protected)\s+'
+_TS_FUNC_RE  = re.compile(rf'(?:{_TS_ACCESS})?(?:async\s+)?function\s+\w+|{_TS_ACCESS}\w+\s*\(', re.MULTILINE)
+
+_FUNCTION_RE: dict[str, re.Pattern[str] | None] = {
     "python":     re.compile(r'^\s*(?:async\s+)?def\s+\w+', re.MULTILINE),
-    "javascript": re.compile(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\()', re.MULTILINE),
-    "typescript": re.compile(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(|(?:public|private|protected|async)\s+\w+\s*\()', re.MULTILINE),
-    "c":          re.compile(r'^\w[\w\s\*]+\w\s*\([^;{]*\)\s*\{', re.MULTILINE),
+    "javascript": _JS_FUNC_RE,
+    "typescript": _TS_FUNC_RE,
+    "c":          re.compile(r'^\w[\w\s*]+\w\s*\([^;{]*\)\s*\{', re.MULTILINE),
     "ruby":       re.compile(r'^\s*def\s+\w+', re.MULTILINE),
     "go":         re.compile(r'^func\s+', re.MULTILINE),
     "rust":       re.compile(r'^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+', re.MULTILINE),
@@ -111,37 +124,41 @@ _ERROR_HANDLING_RE: dict[str, list[re.Pattern[str]]] = {
     ],
 }
 
-_FUNCTION_WORD_RE = re.compile(r'\b([a-zA-Z_][a-zA-Z0-9_]+)\b')
-_DEF_LINE_RE = re.compile(r'^\s*(?:async\s+)?def\s+\w+')
-_DOCSTRING_OPEN_RE = re.compile(r'^\s*("""|\'\'\').')
+_FUNCTION_WORD_RE = re.compile(r'\b([a-zA-Z_]\w+)\b')
+_PY_DEF_RE = re.compile(r'^\s*(?:async\s+)?def\s+\w+')
+_PY_TRIPLE_QUOTE = ('"""', "'''")
+
+
+def _find_sig_end(lines: list[str], start: int) -> int:
+    """Return index of the line ending the function signature (has trailing ':'), or -1."""
+    for j in range(start, min(start + 20, len(lines))):
+        if lines[j].rstrip().endswith(':'):
+            return j
+    return -1
+
+
+def _first_non_empty(lines: list[str], start: int) -> int:
+    """Return index of first non-empty line at or after start, or len(lines)."""
+    k = start
+    while k < len(lines) and not lines[k].strip():
+        k += 1
+    return k
 
 
 def _count_py_documented_fns(code: str) -> tuple[int, int]:
     """Return (n_documented, n_total) for Python, handling multi-line signatures."""
     lines = code.split('\n')
     n_total, n_documented = 0, 0
-    i = 0
-    while i < len(lines):
-        if _DEF_LINE_RE.match(lines[i]):
-            n_total += 1
-            # Walk forward to find the ':' that closes the signature
-            j = i
-            found_colon = False
-            while j < min(i + 20, len(lines)):
-                if lines[j].rstrip().endswith(':'):
-                    found_colon = True
-                    break
-                j += 1
-            if found_colon:
-                # Next non-empty line after the signature
-                k = j + 1
-                while k < len(lines) and not lines[k].strip():
-                    k += 1
-                if k < len(lines):
-                    stripped = lines[k].strip()
-                    if stripped.startswith('"""') or stripped.startswith("'''"):
-                        n_documented += 1
-        i += 1
+    for i, line in enumerate(lines):
+        if not _PY_DEF_RE.match(line):
+            continue
+        n_total += 1
+        sig_end = _find_sig_end(lines, i)
+        if sig_end < 0:
+            continue
+        first_body = _first_non_empty(lines, sig_end + 1)
+        if first_body < len(lines) and lines[first_body].strip().startswith(_PY_TRIPLE_QUOTE):
+            n_documented += 1
     return n_documented, n_total
 
 
@@ -302,16 +319,16 @@ class CodeAnalyzer:
         )
 
         # --- Docstrings & function coverage ---
+        doc_re = _DOCSTRING_RE[self.language]
+        fn_re = _FUNCTION_RE[self.language]
         if self.language == "python":
             n_documented, n_functions = _count_py_documented_fns(code)
             n_docstrings_raw = n_documented
-            doc_completeness = n_documented / n_functions if n_functions > 0 else 0.0
         else:
-            doc_re = _DOCSTRING_RE[self.language]
-            fn_re = _FUNCTION_RE.get(self.language)
-            n_docstrings_raw = len(doc_re.findall(code))
+            n_docstrings_raw = len(doc_re.findall(code)) if doc_re else 0
             n_functions = len(fn_re.findall(code)) if fn_re else 0
-            doc_completeness = n_docstrings_raw / n_functions if n_functions > 0 else 0.0
+            n_documented = n_docstrings_raw
+        doc_completeness = n_documented / n_functions if n_functions > 0 else 0.0
 
         # --- Error handling ---
         err_patterns = _ERROR_HANDLING_RE.get(self.language, [])

@@ -264,7 +264,7 @@ class TestCopilotScore:
 
     def test_too_short_returns_zero(self):
         ca = CodeAnalyzer(min_lines=100)
-        assert ca.copilot_score("x = 1") == 0.0
+        assert ca.copilot_score("x = 1") == pytest.approx(0.0)
 
     def test_module_level_copilot_score(self):
         s = copilot_score(PYTHON_LLM)
@@ -318,7 +318,7 @@ class TestStyleProfile:
         p = StyleProfile("empty")
         assert p.centroid is None
         assert p.features is None
-        assert p.copilot_score == 0.0
+        assert p.copilot_score == pytest.approx(0.0)
 
     def test_language_param_propagates(self):
         p = StyleProfile("dev", language="typescript")

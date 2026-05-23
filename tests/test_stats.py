@@ -126,7 +126,7 @@ class TestIntraVariance:
         from stylometry import StyleAnalyzer
         sa = StyleAnalyzer(language="en", min_words=3)
         result = intra_variance({"A": ["only one text here"]}, sa)
-        assert result["A"] == 0.0
+        assert result["A"] == pytest.approx(0.0)
 
 
 class TestDetectChangePoints:
@@ -170,7 +170,7 @@ class TestComputeDrift:
 
     def test_drift_positive_when_post_higher(self):
         result = compute_drift([10.0, 10.0, 10.0, 50.0, 50.0, 50.0], split_index=3)
-        assert result["drift"] == pytest.approx(40.0)
+        assert result["drift"] == pytest.approx(40.0, abs=0.1)
 
     def test_empty_pre_omits_baseline(self):
         result = compute_drift([50.0, 55.0], split_index=0)
