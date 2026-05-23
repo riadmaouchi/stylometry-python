@@ -66,13 +66,13 @@ _DOCSTRING_RE: dict[str, re.Pattern[str] | None] = {
     "python": None,          # handled by _count_py_documented_fns
     "javascript": _JSDOC_RE,
     "typescript": _JSDOC_RE,
-    "go":   re.compile(r'//\s*\w[^\n]*\n\s*func\s+'),
-    "rust": re.compile(r'///[^\n]*\n\s*(?:pub\s+)?(?:async\s+)?fn\s+'),
-    "c":    re.compile(r'/\*\*.*?\*/\s*\n\s*\w+\s+\w+\s*\(', re.DOTALL),
-    "ruby": re.compile(r'#\s*[A-Z][^\n]+\n\s*def\s+\w+'),
+    "go":   re.compile(r'//[ \t]*\w[^\n]*\n[ \t]*func[ \t]+'),
+    "rust": re.compile(r'///[^\n]*\n[ \t]*(?:pub[ \t]+)?(?:async[ \t]+)?fn[ \t]+'),
+    "c":    re.compile(r'/\*\*.*?\*/[ \t]*\n[ \t]*\w+[ \t]+\w+[ \t]*\(', re.DOTALL),
+    "ruby": re.compile(r'#[ \t]*[A-Z][^\n]+\n[ \t]*def[ \t]+\w+'),
 }
 
-_JS_FUNC_RE  = re.compile(r'function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(', re.MULTILINE)
+_JS_FUNC_RE  = re.compile(r'function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*\(', re.MULTILINE)
 _TS_FUNC_RE  = re.compile(r'(?:async\s+)?function\s+\w+|(?:public|private|protected)\s+\w+\s*\(', re.MULTILINE)
 
 _FUNCTION_RE: dict[str, re.Pattern[str] | None] = {
@@ -113,7 +113,7 @@ _ERROR_HANDLING_RE: dict[str, list[re.Pattern[str]]] = {
     ],
     "go": [
         re.compile(r'if\s+\w*err\w*\s*!=\s*nil'),
-        re.compile(r'return\s+.*\berr\b'),
+        re.compile(r'return\s+[^\n]*\berr\b'),
     ],
     "rust": [
         re.compile(r'\?\s*$'),
