@@ -1,0 +1,44 @@
+name: Bug report
+description: Something isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to report a bug!
+  - type: input
+    id: version
+    attributes:
+      label: stylometry-python version
+      placeholder: "e.g. 1.4.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: language
+    attributes:
+      label: Language analyzed
+      options: [python, javascript, typescript, c, ruby, go, rust, prose (StyleAnalyzer)]
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      render: python
+      placeholder: |
+        from stylometry import CodeAnalyzer
+        ca = CodeAnalyzer(language="python")
+        # ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior (error / wrong output)
+    validations:
+      required: true

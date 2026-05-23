@@ -1,0 +1,28 @@
+name: Feature request
+description: Suggest a new signal, language, or API improvement
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [New language support, New stylometric feature, LLM signal / copilot_score, stats module, API / DX improvement, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      placeholder: "What use case is currently not supported?"
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

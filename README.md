@@ -14,7 +14,9 @@ pip install stylometry-python
 [![CI](https://github.com/riadmaouchi/stylometry-python/actions/workflows/ci.yml/badge.svg)](https://github.com/riadmaouchi/stylometry-python/actions/workflows/ci.yml)
 [![Publish](https://github.com/riadmaouchi/stylometry-python/actions/workflows/publish.yml/badge.svg)](https://github.com/riadmaouchi/stylometry-python/actions/workflows/publish.yml)
 [![PyPI version](https://img.shields.io/pypi/v/stylometry-python.svg)](https://pypi.org/project/stylometry-python/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/stylometry-python?label=PyPI%20downloads)](https://pypi.org/project/stylometry-python/)
 [![codecov](https://codecov.io/github/riadmaouchi/stylometry-python/graph/badge.svg?token=GP1274n1wW)](https://codecov.io/github/riadmaouchi/stylometry-python)
+[![GitHub stars](https://img.shields.io/github/stars/riadmaouchi/stylometry-python?style=social)](https://github.com/riadmaouchi/stylometry-python/stargazers)
 
 ---
 
