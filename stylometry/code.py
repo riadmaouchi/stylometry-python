@@ -72,15 +72,14 @@ _DOCSTRING_RE: dict[str, re.Pattern[str] | None] = {
     "ruby": re.compile(r'#\s*[A-Z][^\n]+\n\s*def\s+\w+'),
 }
 
-_JS_FUNC_RE  = re.compile(r'(?:function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\()', re.MULTILINE)
-_TS_ACCESS   = r'(?:public|private|protected)\s+'
-_TS_FUNC_RE  = re.compile(rf'(?:{_TS_ACCESS})?(?:async\s+)?function\s+\w+|{_TS_ACCESS}\w+\s*\(', re.MULTILINE)
+_JS_FUNC_RE  = re.compile(r'function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*(?:async\s*)?\(', re.MULTILINE)
+_TS_FUNC_RE  = re.compile(r'(?:async\s+)?function\s+\w+|(?:public|private|protected)\s+\w+\s*\(', re.MULTILINE)
 
 _FUNCTION_RE: dict[str, re.Pattern[str] | None] = {
     "python":     re.compile(r'^\s*(?:async\s+)?def\s+\w+', re.MULTILINE),
     "javascript": _JS_FUNC_RE,
     "typescript": _TS_FUNC_RE,
-    "c":          re.compile(r'^\w[\w\s*]+\w\s*\([^;{]*\)\s*\{', re.MULTILINE),
+    "c":          re.compile(r'^\w[^(;{]+\([^;{}]*\)\s*\{', re.MULTILINE),
     "ruby":       re.compile(r'^\s*def\s+\w+', re.MULTILINE),
     "go":         re.compile(r'^func\s+', re.MULTILINE),
     "rust":       re.compile(r'^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+', re.MULTILINE),
@@ -343,7 +342,7 @@ class CodeAnalyzer:
         n_type_hints = len(type_re.findall(code)) / n if type_re else 0.0
 
         # --- List comprehensions (Python only) ---
-        list_comp = len(re.findall(r"\[.+for .+in .+\]", code)) / n
+        list_comp = len(re.findall(r'\[[^\[\]]*\bfor\b[^\[\]]*\bin\b[^\[\]]*\]', code)) / n
 
         # --- Layout ---
         avg_len = float(np.mean([len(line) for line in non_empty]))
