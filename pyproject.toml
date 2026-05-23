@@ -15,12 +15,18 @@ authors = [
 keywords = [
   "stylometry",
   "authorship attribution",
+  "authorship analysis",
   "nlp",
   "text analysis",
+  "natural language processing",
   "forensics",
   "llm detection",
+  "ai detection",
   "code analysis",
   "copilot detection",
+  "writing style",
+  "cosine distance",
+  "function words",
 ]
 classifiers = [
   "Development Status :: 3 - Alpha",
