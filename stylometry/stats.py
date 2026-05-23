@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import itertools
 from itertools import combinations
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import numpy as np
 from scipy.stats import ttest_ind

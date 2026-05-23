@@ -11,7 +11,6 @@ from stylometry.code import (
     CODE_FEATURES,
     SUPPORTED_LANGUAGES,
     copilot_score,
-    extract_features,
 )
 
 # ---------------------------------------------------------------------------

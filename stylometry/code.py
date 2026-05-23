@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Literal, Sequence
+from typing import Sequence
 
 import numpy as np
 
@@ -358,7 +358,7 @@ class CodeAnalyzer:
             "error_handling_density": error_density,
             "identifier_verbosity":   min(avg_id_len / 20.0, 1.0),
             "avg_line_length":        min(avg_len / 100.0, 1.0),
-            "blank_line_ratio":       sum(1 for l in lines if not l.strip()) / max(len(lines), 1),
+            "blank_line_ratio":       sum(1 for ln in lines if not ln.strip()) / max(len(lines), 1),
         }
 
     def vectorize(self, code: str) -> np.ndarray:
