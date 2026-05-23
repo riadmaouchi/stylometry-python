@@ -130,7 +130,9 @@ def pairwise_tests(
     list of dicts sorted by p_corrected ascending
     """
     if correction not in _CORRECTIONS:
-        raise ValueError(f"correction must be one of {_CORRECTIONS!r}, got {correction!r}")
+        raise ValueError(
+            f"correction must be one of {_CORRECTIONS!r}, got {correction!r}"
+        )
 
     models = list(shifts_dict.keys())
     pairs = list(itertools.combinations(models, 2))
@@ -150,12 +152,14 @@ def pairwise_tests(
             p_corr = min(r["p_raw"] * (n_tests - i), 1.0)
         else:
             p_corr = r["p_raw"]
-        r.update({
-            "p_corrected": p_corr,
-            "significant_05": p_corr < 0.05,
-            "correction": correction,
-            "n_tests": n_tests,
-        })
+        r.update(
+            {
+                "p_corrected": p_corr,
+                "significant_05": p_corr < 0.05,
+                "correction": correction,
+                "n_tests": n_tests,
+            }
+        )
 
     return sorted(raw, key=lambda r: r["p_corrected"])
 
@@ -245,8 +249,8 @@ def detect_change_points(
     for bkp in breakpoints[:-1]:  # last element is len(arr), not a real breakpoint
         if bkp >= len(arr):
             continue
-        before = arr[max(0, bkp - min_size): bkp]
-        after = arr[bkp: min(len(arr), bkp + min_size)]
+        before = arr[max(0, bkp - min_size) : bkp]
+        after = arr[bkp : min(len(arr), bkp + min_size)]
         if len(before) == 0 or len(after) == 0:
             continue
         v_before = float(np.mean(before))
@@ -254,12 +258,14 @@ def detect_change_points(
         magnitude = abs(v_after - v_before)
         if magnitude < min_magnitude:
             continue
-        results.append({
-            "index": bkp,
-            "value_before": round(v_before, 2),
-            "value_after": round(v_after, 2),
-            "magnitude": round(magnitude, 2),
-        })
+        results.append(
+            {
+                "index": bkp,
+                "value_before": round(v_before, 2),
+                "value_after": round(v_after, 2),
+                "magnitude": round(magnitude, 2),
+            }
+        )
 
     return sorted(results, key=lambda r: r["magnitude"], reverse=True)
 

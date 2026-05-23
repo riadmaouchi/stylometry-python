@@ -23,16 +23,30 @@ import numpy as np
 # Supported languages
 # ---------------------------------------------------------------------------
 
-SUPPORTED_LANGUAGES = frozenset({
-    "python", "javascript", "typescript", "c", "ruby", "go", "rust",
-})
+SUPPORTED_LANGUAGES = frozenset(
+    {
+        "python",
+        "javascript",
+        "typescript",
+        "c",
+        "ruby",
+        "go",
+        "rust",
+    }
+)
 
 # Extension → language mapping (used by auto-detection)
 _EXT_TO_LANG: dict[str, str] = {
     ".py": "python",
-    ".js": "javascript", ".mjs": "javascript", ".cjs": "javascript",
-    ".ts": "typescript", ".tsx": "typescript",
-    ".c": "c", ".h": "c", ".cpp": "c", ".cc": "c",
+    ".js": "javascript",
+    ".mjs": "javascript",
+    ".cjs": "javascript",
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".c": "c",
+    ".h": "c",
+    ".cpp": "c",
+    ".cc": "c",
     ".rb": "ruby",
     ".go": "go",
     ".rs": "rust",
@@ -43,95 +57,99 @@ _EXT_TO_LANG: dict[str, str] = {
 # ---------------------------------------------------------------------------
 
 # Shared comment-prefix strings (avoids duplicating literals)
-_P_HASH       = r"^\s*#"
+_P_HASH = r"^\s*#"
 _P_SLASHSLASH = r"^\s*//"
-_P_SLASHSTAR  = r"^\s*/\*"
-_P_STAR       = r"^\s*\*"
-_P_DOC_SLASH  = r"^\s*///"
+_P_SLASHSTAR = r"^\s*/\*"
+_P_STAR = r"^\s*\*"
+_P_DOC_SLASH = r"^\s*///"
 
 _COMMENT_PREFIXES: dict[str, list[str]] = {
-    "python":     [_P_HASH],
+    "python": [_P_HASH],
     "javascript": [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
     "typescript": [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
-    "c":          [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
-    "ruby":       [_P_HASH],
-    "go":         [_P_SLASHSLASH],
-    "rust":       [_P_DOC_SLASH, _P_SLASHSLASH],
+    "c": [_P_SLASHSLASH, _P_SLASHSTAR, _P_STAR],
+    "ruby": [_P_HASH],
+    "go": [_P_SLASHSLASH],
+    "rust": [_P_DOC_SLASH, _P_SLASHSLASH],
 }
 
 # JSDoc block — shared by JS and TS (count blocks, not anchored to function type)
-_JSDOC_RE = re.compile(r'/\*\*.*?\*/', re.DOTALL)
+_JSDOC_RE = re.compile(r"/\*\*.*?\*/", re.DOTALL)
 
 _DOCSTRING_RE: dict[str, re.Pattern[str] | None] = {
-    "python": None,          # handled by _count_py_documented_fns
+    "python": None,  # handled by _count_py_documented_fns
     "javascript": _JSDOC_RE,
     "typescript": _JSDOC_RE,
-    "go":   re.compile(r'//[ \t]*\w[^\n]*\n[ \t]*func[ \t]+'),
-    "rust": re.compile(r'///[^\n]*\n[ \t]*(?:pub[ \t]+)?(?:async[ \t]+)?fn[ \t]+'),
-    "c":    re.compile(r'/\*\*.*?\*/[ \t]*\n[ \t]*\w+[ \t]+\w+[ \t]*\(', re.DOTALL),
-    "ruby": re.compile(r'#[ \t]*[A-Z][^\n]+\n[ \t]*def[ \t]+\w+'),
+    "go": re.compile(r"//[ \t]*\w[^\n]*\n[ \t]*func[ \t]+"),
+    "rust": re.compile(r"///[^\n]*\n[ \t]*(?:pub[ \t]+)?(?:async[ \t]+)?fn[ \t]+"),
+    "c": re.compile(r"/\*\*.*?\*/[ \t]*\n[ \t]*\w+[ \t]+\w+[ \t]*\(", re.DOTALL),
+    "ruby": re.compile(r"#[ \t]*[A-Z][^\n]+\n[ \t]*def[ \t]+\w+"),
 }
 
-_JS_FUNC_RE  = re.compile(r'function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*\(', re.MULTILINE)
-_TS_FUNC_RE  = re.compile(r'(?:async\s+)?function\s+\w+|(?:public|private|protected)\s+\w+\s*\(', re.MULTILINE)
+_JS_FUNC_RE = re.compile(
+    r"function\s+\w+|(?:const|let|var)\s+\w+\s*=\s*\(", re.MULTILINE
+)
+_TS_FUNC_RE = re.compile(
+    r"(?:async\s+)?function\s+\w+|(?:public|private|protected)\s+\w+\s*\(", re.MULTILINE
+)
 
 _FUNCTION_RE: dict[str, re.Pattern[str] | None] = {
-    "python":     re.compile(r'^\s*(?:async\s+)?def\s+\w+', re.MULTILINE),
+    "python": re.compile(r"^\s*(?:async\s+)?def\s+\w+", re.MULTILINE),
     "javascript": _JS_FUNC_RE,
     "typescript": _TS_FUNC_RE,
-    "c":          re.compile(r'^\w[^(;{]+\([^;{}]*\)\s*\{', re.MULTILINE),
-    "ruby":       re.compile(r'^\s*def\s+\w+', re.MULTILINE),
-    "go":         re.compile(r'^func\s+', re.MULTILINE),
-    "rust":       re.compile(r'^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+', re.MULTILINE),
+    "c": re.compile(r"^\w[^(;{]+\([^;{}]*\)\s*\{", re.MULTILINE),
+    "ruby": re.compile(r"^\s*def\s+\w+", re.MULTILINE),
+    "go": re.compile(r"^func\s+", re.MULTILINE),
+    "rust": re.compile(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+\w+", re.MULTILINE),
 }
 
 _ERROR_HANDLING_RE: dict[str, list[re.Pattern[str]]] = {
     "python": [
-        re.compile(r'^\s*try\s*:'),
-        re.compile(r'^\s*except\b'),
-        re.compile(r'^\s*raise\b'),
+        re.compile(r"^\s*try\s*:"),
+        re.compile(r"^\s*except\b"),
+        re.compile(r"^\s*raise\b"),
     ],
     "javascript": [
-        re.compile(r'^\s*try\s*\{'),
-        re.compile(r'catch\s*\('),
-        re.compile(r'\bthrow\s+(?:new\s+)?\w+'),
+        re.compile(r"^\s*try\s*\{"),
+        re.compile(r"catch\s*\("),
+        re.compile(r"\bthrow\s+(?:new\s+)?\w+"),
     ],
     "typescript": [
-        re.compile(r'^\s*try\s*\{'),
-        re.compile(r'catch\s*\('),
-        re.compile(r'\bthrow\s+(?:new\s+)?\w+'),
+        re.compile(r"^\s*try\s*\{"),
+        re.compile(r"catch\s*\("),
+        re.compile(r"\bthrow\s+(?:new\s+)?\w+"),
     ],
     "c": [
-        re.compile(r'if\s*\(\s*(?:err|error|ret|result|status)\s*[<>!=]'),
-        re.compile(r'return\s+-1\s*;'),
-        re.compile(r'goto\s+\w+\s*;'),
+        re.compile(r"if\s*\(\s*(?:err|error|ret|result|status)\s*[<>!=]"),
+        re.compile(r"return\s+-1\s*;"),
+        re.compile(r"goto\s+\w+\s*;"),
     ],
     "ruby": [
-        re.compile(r'^\s*begin\s*$'),
-        re.compile(r'^\s*rescue\b'),
-        re.compile(r'^\s*raise\b'),
+        re.compile(r"^\s*begin\s*$"),
+        re.compile(r"^\s*rescue\b"),
+        re.compile(r"^\s*raise\b"),
     ],
     "go": [
-        re.compile(r'if\s+\w*err\w*\s*!=\s*nil'),
-        re.compile(r'return\s+[^\n]*\berr\b'),
+        re.compile(r"if\s+\w*err\w*\s*!=\s*nil"),
+        re.compile(r"return\s+[^\n]*\berr\b"),
     ],
     "rust": [
-        re.compile(r'\?\s*$'),
-        re.compile(r'\.unwrap_or'),
-        re.compile(r'\bunwrap\(\)'),
-        re.compile(r'match\s+\w+\s*\{'),
+        re.compile(r"\?\s*$"),
+        re.compile(r"\.unwrap_or"),
+        re.compile(r"\bunwrap\(\)"),
+        re.compile(r"match\s+\w+\s*\{"),
     ],
 }
 
-_FUNCTION_WORD_RE = re.compile(r'\b([a-zA-Z_]\w+)\b')
-_PY_DEF_RE = re.compile(r'^\s*(?:async\s+)?def\s+\w+')
+_FUNCTION_WORD_RE = re.compile(r"\b([a-zA-Z_]\w+)\b")
+_PY_DEF_RE = re.compile(r"^\s*(?:async\s+)?def\s+\w+")
 _PY_TRIPLE_QUOTE = ('"""', "'''")
 
 
 def _find_sig_end(lines: list[str], start: int) -> int:
     """Return index of the line ending the function signature (has trailing ':'), or -1."""
     for j in range(start, min(start + 20, len(lines))):
-        if lines[j].rstrip().endswith(':'):
+        if lines[j].rstrip().endswith(":"):
             return j
     return -1
 
@@ -146,7 +164,7 @@ def _first_non_empty(lines: list[str], start: int) -> int:
 
 def _count_py_documented_fns(code: str) -> tuple[int, int]:
     """Return (n_documented, n_total) for Python, handling multi-line signatures."""
-    lines = code.split('\n')
+    lines = code.split("\n")
     n_total, n_documented = 0, 0
     for i, line in enumerate(lines):
         if not _PY_DEF_RE.match(line):
@@ -156,19 +174,25 @@ def _count_py_documented_fns(code: str) -> tuple[int, int]:
         if sig_end < 0:
             continue
         first_body = _first_non_empty(lines, sig_end + 1)
-        if first_body < len(lines) and lines[first_body].strip().startswith(_PY_TRIPLE_QUOTE):
+        if first_body < len(lines) and lines[first_body].strip().startswith(
+            _PY_TRIPLE_QUOTE
+        ):
             n_documented += 1
     return n_documented, n_total
 
 
 _TYPE_HINT_RE: dict[str, re.Pattern[str] | None] = {
-    "python":     re.compile(r':\s*(?:int|str|float|bool|list|dict|tuple|Optional|Union|Any|Sequence)'),
-    "typescript": re.compile(r':\s*(?:string|number|boolean|void|any|never|unknown|object)\b'),
+    "python": re.compile(
+        r":\s*(?:int|str|float|bool|list|dict|tuple|Optional|Union|Any|Sequence)"
+    ),
+    "typescript": re.compile(
+        r":\s*(?:string|number|boolean|void|any|never|unknown|object)\b"
+    ),
     "javascript": None,
-    "c":          None,
-    "ruby":       None,
-    "go":         None,
-    "rust":       re.compile(r'->\s*(?:\w+|&\w+|Option<|Result<)'),
+    "c": None,
+    "ruby": None,
+    "go": None,
+    "rust": re.compile(r"->\s*(?:\w+|&\w+|Option<|Result<)"),
 }
 
 # ---------------------------------------------------------------------------
@@ -177,21 +201,21 @@ _TYPE_HINT_RE: dict[str, re.Pattern[str] | None] = {
 
 CODE_FEATURES = [
     # Naming conventions
-    "camelCase_ratio",        # identifiers in camelCase / total identifiers
-    "snake_case_ratio",       # identifiers in snake_case / total identifiers
+    "camelCase_ratio",  # identifiers in camelCase / total identifiers
+    "snake_case_ratio",  # identifiers in snake_case / total identifiers
     # Comment & documentation
-    "comment_density",        # comment lines / non-empty lines
-    "docstring_density",      # docstring occurrences / non-empty lines
-    "docstring_completeness", # documented functions / total functions  [NEW 1.4]
+    "comment_density",  # comment lines / non-empty lines
+    "docstring_density",  # docstring occurrences / non-empty lines
+    "docstring_completeness",  # documented functions / total functions  [NEW 1.4]
     # Language-specific style
-    "type_hint_usage",        # type annotations per non-empty line
-    "list_comp_usage",        # list comprehensions per non-empty line (Python)
+    "type_hint_usage",  # type annotations per non-empty line
+    "list_comp_usage",  # list comprehensions per non-empty line (Python)
     # LLM-associated signals                               [NEW 1.4]
-    "error_handling_density", # try/catch/rescue constructs per 100 lines
-    "identifier_verbosity",   # avg identifier length, normalized to [0, 1]
+    "error_handling_density",  # try/catch/rescue constructs per 100 lines
+    "identifier_verbosity",  # avg identifier length, normalized to [0, 1]
     # Layout
-    "avg_line_length",        # mean line length, normalized to [0, 1]
-    "blank_line_ratio",       # blank lines / total lines
+    "avg_line_length",  # mean line length, normalized to [0, 1]
+    "blank_line_ratio",  # blank lines / total lines
 ]
 
 # ---------------------------------------------------------------------------
@@ -199,12 +223,12 @@ CODE_FEATURES = [
 # Each entry: (feature, weight, organic_baseline, llm_typical)
 # ---------------------------------------------------------------------------
 _LLM_SIGNALS: list[tuple[str, float, float, float]] = [
-    ("comment_density",        0.15,  0.08, 0.22),
-    ("docstring_completeness", 0.25,  0.15, 0.65),
-    ("identifier_verbosity",   0.20,  0.40, 0.65),   # normalized: 8→0.40, 13→0.65
-    ("error_handling_density", 0.15,  0.02, 0.08),
-    ("type_hint_usage",        0.15,  0.05, 0.18),
-    ("docstring_density",      0.10,  0.05, 0.15),
+    ("comment_density", 0.15, 0.08, 0.22),
+    ("docstring_completeness", 0.25, 0.15, 0.65),
+    ("identifier_verbosity", 0.20, 0.40, 0.65),  # normalized: 8→0.40, 13→0.65
+    ("error_handling_density", 0.15, 0.02, 0.08),
+    ("type_hint_usage", 0.15, 0.05, 0.18),
+    ("docstring_density", 0.10, 0.05, 0.15),
 ]
 
 
@@ -212,13 +236,18 @@ _LLM_SIGNALS: list[tuple[str, float, float, float]] = [
 # Helper: compile comment patterns for a language
 # ---------------------------------------------------------------------------
 
+
 def _compile_comment_patterns(language: str) -> list[re.Pattern[str]]:
-    return [re.compile(p) for p in _COMMENT_PREFIXES.get(language, _COMMENT_PREFIXES["python"])]
+    return [
+        re.compile(p)
+        for p in _COMMENT_PREFIXES.get(language, _COMMENT_PREFIXES["python"])
+    ]
 
 
 # ---------------------------------------------------------------------------
 # CodeAnalyzer
 # ---------------------------------------------------------------------------
+
 
 class CodeAnalyzer:
     """
@@ -313,7 +342,8 @@ class CodeAnalyzer:
 
         # --- Comments ---
         n_comments = sum(
-            1 for line in non_empty
+            1
+            for line in non_empty
             if any(p.match(line) for p in self._comment_patterns)
         )
 
@@ -332,8 +362,7 @@ class CodeAnalyzer:
         # --- Error handling ---
         err_patterns = _ERROR_HANDLING_RE.get(self.language, [])
         n_error = sum(
-            1 for line in non_empty
-            if any(p.search(line) for p in err_patterns)
+            1 for line in non_empty if any(p.search(line) for p in err_patterns)
         )
         error_density = min(n_error / n * 100 / 15.0, 1.0)  # normalize: 15% = 1.0
 
@@ -342,23 +371,26 @@ class CodeAnalyzer:
         n_type_hints = len(type_re.findall(code)) / n if type_re else 0.0
 
         # --- List comprehensions (Python only) ---
-        list_comp = len(re.findall(r'\[[^\[\]]*\bfor\b[^\[\]]*\bin\b[^\[\]]*\]', code)) / n
+        list_comp = (
+            len(re.findall(r"\[[^\[\]]*\bfor\b[^\[\]]*\bin\b[^\[\]]*\]", code)) / n
+        )
 
         # --- Layout ---
         avg_len = float(np.mean([len(line) for line in non_empty]))
 
         return {
-            "camelCase_ratio":        min(len(camel) / n_names, 1.0),
-            "snake_case_ratio":       min(len(snake) / n_names, 1.0),
-            "comment_density":        min(n_comments / n, 1.0),
-            "docstring_density":      min(n_docstrings_raw / n, 1.0),
+            "camelCase_ratio": min(len(camel) / n_names, 1.0),
+            "snake_case_ratio": min(len(snake) / n_names, 1.0),
+            "comment_density": min(n_comments / n, 1.0),
+            "docstring_density": min(n_docstrings_raw / n, 1.0),
             "docstring_completeness": min(doc_completeness, 1.0),
-            "type_hint_usage":        min(n_type_hints, 1.0),
-            "list_comp_usage":        min(list_comp, 1.0),
+            "type_hint_usage": min(n_type_hints, 1.0),
+            "list_comp_usage": min(list_comp, 1.0),
             "error_handling_density": error_density,
-            "identifier_verbosity":   min(avg_id_len / 20.0, 1.0),
-            "avg_line_length":        min(avg_len / 100.0, 1.0),
-            "blank_line_ratio":       sum(1 for ln in lines if not ln.strip()) / max(len(lines), 1),
+            "identifier_verbosity": min(avg_id_len / 20.0, 1.0),
+            "avg_line_length": min(avg_len / 100.0, 1.0),
+            "blank_line_ratio": sum(1 for ln in lines if not ln.strip())
+            / max(len(lines), 1),
         }
 
     def vectorize(self, code: str) -> np.ndarray:
@@ -493,9 +525,7 @@ class CodeAnalyzer:
             }
 
         labels = list(group_means.keys())
-        header = f"  {'Feature':28s}" + "".join(
-            f"  {lb:>12s}" for lb in labels
-        )
+        header = f"  {'Feature':28s}" + "".join(f"  {lb:>12s}" for lb in labels)
         sep = "─" * len(header)
         rows = [header, sep]
 
@@ -522,6 +552,7 @@ class CodeAnalyzer:
 # ---------------------------------------------------------------------------
 # StyleProfile — centroid wrapper
 # ---------------------------------------------------------------------------
+
 
 class StyleProfile:
     """
@@ -613,7 +644,10 @@ class StyleProfile:
 # Module-level convenience functions
 # ---------------------------------------------------------------------------
 
-def extract_features(source: str, language: str = "python", min_lines: int = 4) -> dict[str, float]:
+
+def extract_features(
+    source: str, language: str = "python", min_lines: int = 4
+) -> dict[str, float]:
     """Convenience: extract code features. See CodeAnalyzer."""
     return CodeAnalyzer(language=language, min_lines=min_lines).extract_features(source)
 

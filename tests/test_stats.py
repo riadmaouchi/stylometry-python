@@ -113,6 +113,7 @@ class TestIntraVariance:
 
     def test_returns_dict_per_group(self):
         from stylometry import StyleAnalyzer
+
         # Use min_words=3 to accept short test sentences
         sa = StyleAnalyzer(language="en", min_words=3)
         texts = {
@@ -124,6 +125,7 @@ class TestIntraVariance:
 
     def test_single_text_returns_zero(self):
         from stylometry import StyleAnalyzer
+
         sa = StyleAnalyzer(language="en", min_words=3)
         result = intra_variance({"A": ["only one text here"]}, sa)
         assert result["A"] == pytest.approx(0.0)
@@ -154,7 +156,9 @@ class TestDetectChangePoints:
 
     def test_sorted_by_magnitude(self):
         series = [10.0] * 3 + [80.0] * 3 + [15.0] * 3
-        results = detect_change_points(series, min_size=2, penalty=1.0, min_magnitude=5.0)
+        results = detect_change_points(
+            series, min_size=2, penalty=1.0, min_magnitude=5.0
+        )
         if len(results) > 1:
             magnitudes = [r["magnitude"] for r in results]
             assert magnitudes == sorted(magnitudes, reverse=True)

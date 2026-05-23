@@ -113,6 +113,7 @@ func process(items []int) []int {
 # CodeAnalyzer — basic contract
 # ---------------------------------------------------------------------------
 
+
 class TestCodeAnalyzerContract:
 
     def test_extract_features_returns_all_keys(self):
@@ -155,27 +156,36 @@ class TestCodeAnalyzerContract:
 # Feature discrimination — Python
 # ---------------------------------------------------------------------------
 
+
 class TestPythonFeatures:
 
     def test_camelcase_higher_in_human(self):
         ca = CodeAnalyzer()
-        assert ca.extract_features(PYTHON_HUMAN)["camelCase_ratio"] > \
-               ca.extract_features(PYTHON_LLM)["camelCase_ratio"]
+        assert (
+            ca.extract_features(PYTHON_HUMAN)["camelCase_ratio"]
+            > ca.extract_features(PYTHON_LLM)["camelCase_ratio"]
+        )
 
     def test_type_hints_higher_in_llm(self):
         ca = CodeAnalyzer()
-        assert ca.extract_features(PYTHON_LLM)["type_hint_usage"] > \
-               ca.extract_features(PYTHON_HUMAN)["type_hint_usage"]
+        assert (
+            ca.extract_features(PYTHON_LLM)["type_hint_usage"]
+            > ca.extract_features(PYTHON_HUMAN)["type_hint_usage"]
+        )
 
     def test_docstring_completeness_higher_in_llm(self):
         ca = CodeAnalyzer()
-        assert ca.extract_features(PYTHON_LLM)["docstring_completeness"] > \
-               ca.extract_features(PYTHON_HUMAN)["docstring_completeness"]
+        assert (
+            ca.extract_features(PYTHON_LLM)["docstring_completeness"]
+            > ca.extract_features(PYTHON_HUMAN)["docstring_completeness"]
+        )
 
     def test_error_handling_higher_in_llm(self):
         ca = CodeAnalyzer()
-        assert ca.extract_features(PYTHON_LLM)["error_handling_density"] > \
-               ca.extract_features(PYTHON_HUMAN)["error_handling_density"]
+        assert (
+            ca.extract_features(PYTHON_LLM)["error_handling_density"]
+            > ca.extract_features(PYTHON_HUMAN)["error_handling_density"]
+        )
 
     def test_identifier_verbosity_in_range(self):
         # Verbosity = avg identifier length / 20; just verify range, not direction
@@ -189,6 +199,7 @@ class TestPythonFeatures:
 # ---------------------------------------------------------------------------
 # Multi-language support
 # ---------------------------------------------------------------------------
+
 
 class TestMultiLanguage:
 
@@ -206,13 +217,17 @@ class TestMultiLanguage:
 
     def test_typescript_docstring_higher_in_llm(self):
         ca = CodeAnalyzer(language="typescript")
-        assert ca.extract_features(TYPESCRIPT_LLM)["docstring_completeness"] > \
-               ca.extract_features(TYPESCRIPT_HUMAN)["docstring_completeness"]
+        assert (
+            ca.extract_features(TYPESCRIPT_LLM)["docstring_completeness"]
+            > ca.extract_features(TYPESCRIPT_HUMAN)["docstring_completeness"]
+        )
 
     def test_typescript_error_handling_higher_in_llm(self):
         ca = CodeAnalyzer(language="typescript")
-        assert ca.extract_features(TYPESCRIPT_LLM)["error_handling_density"] > \
-               ca.extract_features(TYPESCRIPT_HUMAN)["error_handling_density"]
+        assert (
+            ca.extract_features(TYPESCRIPT_LLM)["error_handling_density"]
+            > ca.extract_features(TYPESCRIPT_HUMAN)["error_handling_density"]
+        )
 
     def test_go_extracts_features(self):
         ca = CodeAnalyzer(language="go")
@@ -246,6 +261,7 @@ class TestMultiLanguage:
 # copilot_score
 # ---------------------------------------------------------------------------
 
+
 class TestCopilotScore:
 
     def test_score_in_range(self):
@@ -274,6 +290,7 @@ class TestCopilotScore:
 # Attribution
 # ---------------------------------------------------------------------------
 
+
 class TestAttribution:
 
     def test_predict_correct_author(self):
@@ -298,6 +315,7 @@ class TestAttribution:
 # ---------------------------------------------------------------------------
 # StyleProfile
 # ---------------------------------------------------------------------------
+
 
 class TestStyleProfile:
 
